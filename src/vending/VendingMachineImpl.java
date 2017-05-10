@@ -1,7 +1,8 @@
 package vending;
 
+import vending.exceptions.*;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,29 +17,28 @@ public class VendingMachineImpl implements VendingMachine {
     private long currentBalance;
 
     public VendingMachineImpl(){
+
         initialize();
     }
 
-    public void initialize(){
-        //initialize machine with 5 coins of each denomination
-        //and 5 cans of each Item
-        for(Coin c : Coin.values()){
-            cashInventory.put(c, 5);
+    private void initialize() {
+        for(Coin coin : Coin.values()) {
+            cashInventory.put(coin, 5);
         }
 
-        for(Item i : Item.values()){
-            itemInventory.put(i, 5);
+        for(Item item : Item.values()){
+            itemInventory.put(item, 5);
         }
-
     }
+
 
     @Override
     public long selectItemAndGetPrice(Item item) {
-        if(itemInventory.hasItem(item)){
-            currentItem = item;
+        if(itemInventory.hasItem(item)) {
+            currentItem=item;
             return currentItem.getPrice();
         }
-        throw new SoldOutException("Sold Out, Please buy another item");
+        throw new SoldOutException("Item Not in Stock");
     }
 
     @Override
@@ -47,8 +47,11 @@ public class VendingMachineImpl implements VendingMachine {
         cashInventory.add(coin);
     }
 
+
+    //not sure what this is for...
     @Override
     public Bucket<Item, List<Coin>> collectItemAndChange() {
+
         Item item = collectItem();
         totalSales = totalSales + currentItem.getPrice();
 
@@ -57,128 +60,122 @@ public class VendingMachineImpl implements VendingMachine {
         return new Bucket<Item, List<Coin>>(item, change);
     }
 
-    private Item collectItem() throws NotSufficientChangeException,
-            NotFullPaidException {
-        if(isFullPaid()){
-            if(hasSufficientChange()){
+    public Item collectItem() throws NotSufficientChangeException, NotPaidInFullException {
+
+        if(isFullPaid()) {
+            if(hasSufficientChange()) {
                 itemInventory.deduct(currentItem);
                 return currentItem;
             }
-            throw new NotSufficientChangeException(
-                    "Not Sufficient change in Machine");
-
+            throw new NotSufficientChangeException("The Vending Machine Does Not Have Sufficient Change for your Purchase." + "\n" +
+                                                    "Please Pay Using Different Denomination(s) of Coins");
         }
 
         long remainingBalance = currentItem.getPrice() - currentBalance;
-        throw new NotFullPaidException("Price not full paid, remaining : ",
-                remainingBalance);
+        throw new NotPaidInFullException("Price Not Paid in Full. Remaining Balance: " + Long.toString(remainingBalance));
     }
 
-    private List<Coin> collectChange() {
+    public List<Coin> collectChange() {
         long changeAmount = currentBalance - currentItem.getPrice();
         List<Coin> change = getChange(changeAmount);
         updateCashInventory(change);
-        currentBalance = 0;
+        if(currentBalance - changeAmount != 0) {
+            throw new SomethingWentTerriblyWrongException("Something Went Terribly Wrong");
+        } else {
+            currentBalance = 0;
+        }
         currentItem = null;
+
         return change;
     }
 
     @Override
-    public List<Coin> refund(){
-        List<Coin> refund = getChange(currentBalance);
-        updateCashInventory(refund);
+    public List<Coin> refund() {
+
+        //Same logic in CollectChange - Should be put in a different method...
+        List<Coin> change = getChange(currentBalance);
+        updateCashInventory(change);
         currentBalance = 0;
         currentItem = null;
-        return refund;
+
+        return change;
     }
 
 
-    private boolean isFullPaid() {
-        if(currentBalance >= currentItem.getPrice()){
+    public boolean isFullPaid() {
+        if(!(currentBalance < currentItem.getPrice())) {
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
-
-    private List<Coin> getChange(long amount) throws NotSufficientChangeException{
-        List<Coin> changes = Collections.EMPTY_LIST;
+    public List getChange(long amount) throws NotSufficientChangeException {
+        List<Coin> change = new ArrayList<Coin>();
 
         if(amount > 0){
-            changes = new ArrayList<>();
-            long balance = amount;
-            while(balance > 0){
-                if(balance >= Coin.QUARTER.getDenomination()
-                        && cashInventory.hasItem(Coin.QUARTER)){
-                    changes.add(Coin.QUARTER);
-                    balance = balance - Coin.QUARTER.getDenomination();
-                    continue;
-
-                }else if(balance >= Coin.DIME.getDenomination()
-                        && cashInventory.hasItem(Coin.DIME)) {
-                    changes.add(Coin.DIME);
-                    balance = balance - Coin.DIME.getDenomination();
-                    continue;
-
-                }else if(balance >= Coin.NICKLE.getDenomination()
-                        && cashInventory.hasItem(Coin.NICKLE)) {
-                    changes.add(Coin.NICKLE);
-                    balance = balance - Coin.NICKLE.getDenomination();
-                    continue;
-
-                }else if(balance >= Coin.PENNY.getDenomination()
-                        && cashInventory.hasItem(Coin.PENNY)) {
-                    changes.add(Coin.PENNY);
-                    balance = balance - Coin.PENNY.getDenomination();
-                    continue;
-
-                }else{
-                    throw new NotSufficientChangeException("Not Sufficient Change in machine");
+            while(amount>0) {
+                getChangeHelper(amount, Coin.QUARTER, change);
+                getChangeHelper(amount, Coin.DIME, change);
+                getChangeHelper(amount, Coin.NICKLE, change);
+                getChangeHelper(amount, Coin.PENNY, change);
+                if (amount > 0) {
+                    throw new NotSufficientChangeException("Sorry. There is not sufficient change. Please Contact Obama.");
                 }
+
             }
         }
 
-        return changes;
+        return change;
+    }
+
+    public void getChangeHelper(long amount, Coin coin, List<Coin> change){
+        if(amount >= coin.getDenomination() && cashInventory.hasItem(coin)){
+            change.add(coin);
+            amount = amount - coin.getDenomination();
+        }
     }
 
     @Override
-    public void reset(){
-        cashInventory.clear();
-        itemInventory.clear();
+    public void reset() {
+        cashInventory = null;
+        itemInventory = null;
         totalSales = 0;
         currentItem = null;
         currentBalance = 0;
+
     }
 
-    public void printStats(){
-        System.out.println("Total Sales : " + totalSales);
+    @Override
+    public void printStats() {
+        System.out.println("Total Sales : " + Long.toString(totalSales));
         System.out.println("Current Item Inventory : " + itemInventory);
         System.out.println("Current Cash Inventory : " + cashInventory);
     }
 
 
-    private boolean hasSufficientChange(){
+
+    public boolean hasSufficientChange() {
         return hasSufficientChangeForAmount(currentBalance - currentItem.getPrice());
     }
 
-    private boolean hasSufficientChangeForAmount(long amount){
+
+    public boolean hasSufficientChangeForAmount(long amount) {
         boolean hasChange = true;
         try{
             getChange(amount);
-        }catch(NotSufficientChangeException nsce){
-            return hasChange = false;
+        }catch(NotSufficientChangeException ex){
+            hasChange = false;
         }
-
         return hasChange;
     }
 
-    private void updateCashInventory(List<Coin> change) {
-        for(Coin c : change){
-            cashInventory.deduct(c);
-        }
+    public void updateCashInventory(List<Coin> coins) {
+
     }
 
-    public long getTotalSales(){
+    @Override
+    public long getTotalSales() {
         return totalSales;
     }
 
