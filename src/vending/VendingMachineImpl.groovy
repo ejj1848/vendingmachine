@@ -71,11 +71,9 @@ public class VendingMachineImpl implements VendingMachine {
         if(itemInventory.getQuantity(currentItem) > 0) {
             totalSales += currentItem.getPrice()
             currentBalance -= currentItem.getPrice()
-            currentItem = null
             new Bucket(currentItem, refund())
         }
         else {
-            currentItem = null
             new Bucket(null, refund())
         }
     }

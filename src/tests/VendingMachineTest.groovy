@@ -96,24 +96,23 @@ class VendingMachineTest extends Specification{
         vendingMachine.getTotalSales() == 0
     }
 
-//    def 'test collect Item And Change'() {
-//        given:
-//        vendingMachine.insertCoin(Coin.QUARTER)
-//        vendingMachine.insertCoin(Coin.QUARTER)
-//        vendingMachine.selectItemAndGetPrice(Item.PEPSI)
-//
-//
-//        expect:
-//        vendingMachine.collectItemAndChange() == bucket
-//
-//        where:
-////        List<Coin> coinList = new ArrayList<>()
-////        coinList.add(Coin.DIME)
-////        coinList.add(Coin.DIME.NICKLE)
-////        Bucket bucket = new Bucket(Item.PEPSI, coinList)
-//
-//        bucket << [new Bucket<>(Item.PEPSI, coinList)]; List<Coin> coinList = new ArrayList<>();coinList.add(Coin.DIME);coinList.add(Coin.NICKLE)
-//    }
+    def 'test collect Item And Change'() {
+        given:
+        vendingMachine.insertCoin(Coin.QUARTER)
+        vendingMachine.insertCoin(Coin.QUARTER)
+        vendingMachine.selectItemAndGetPrice(Item.PEPSI)
+        List<Coin> coinList = new ArrayList<>()
+        coinList.add(Coin.DIME)
+        coinList.add(Coin.NICKLE)
+        Bucket bucket = vendingMachine.collectItemAndChange()
+
+
+        expect:
+        bucket.getSecond() == coinList
+        bucket.getFirst() == Item.PEPSI
+
+
+    }
 
 
 }
