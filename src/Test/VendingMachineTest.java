@@ -16,6 +16,7 @@ import static org.junit.Assert.*;
  * Created by Eric.Johnson on 5/9/2017.
  */
 public class VendingMachineTest {
+    
 
     private static VendingMachine vm;
 
