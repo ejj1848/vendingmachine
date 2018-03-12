@@ -3,8 +3,7 @@ package Test;
 import vending.*;
 
 import java.util.List;
-import org.junit.Ignore;
-import java.util.List;
+import org.junit.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -40,21 +39,31 @@ public class VendingMachineTest {
         //should be Coke
         assertEquals(Item.COKE, item);
         //there should not be any change
-        assertTrue(change.isEmpty()); }
+        assertTrue(change.isEmpty());
+    }
+
     @Test public void testBuyItemWithMorePrice(){
+
         long price = vm.selectItemAndGetPrice(Item.SODA);
+
         assertEquals(Item.SODA.getPrice(), price);
         vm.insertCoin(Coin.QUARTER);
         vm.insertCoin(Coin.QUARTER);
+
         Bucket<Item, List<Coin>> bucket = vm.collectItemAndChange();
+
         Item item = bucket.getFirst(); List<Coin> change = bucket.getSecond();
+
         //should be Coke
         assertEquals(Item.SODA, item);
+
         //there should not be any change
         assertTrue(!change.isEmpty());
+
         //comparing change
         assertEquals(50 - Item.SODA.getPrice(), getTotal(change));
     }
+
     @Test public void testRefund(){
         long price = vm.selectItemAndGetPrice(Item.PEPSI);
         assertEquals(Item.PEPSI.getPrice(), price);
@@ -64,6 +73,7 @@ public class VendingMachineTest {
         vm.insertCoin(Coin.QUARTER);
         assertEquals(41, getTotal(vm.refund()));
     }
+
     @Test(expected=SoldOutException.class)
     public void testSoldOut(){
         for (int i = 0; i < 5; i++) {
@@ -72,6 +82,7 @@ public class VendingMachineTest {
             vm.collectItemAndChange();
         }
     }
+
     @Test(expected=NotSufficientChangeException.class)
     public void testNotSufficientChangeException(){
         for (int i = 0; i < 5; i++) {
@@ -85,6 +96,7 @@ public class VendingMachineTest {
             vm.collectItemAndChange();
         }
     }
+
     @Test(expected=SoldOutException.class)
     public void testReset(){
         VendingMachine vmachine = VendingMachineFactory.createVendingMachine();
@@ -99,7 +111,6 @@ public class VendingMachineTest {
     private long getTotal(List<Coin> change){
 
         long total = 0; for(Coin c : change){
-
             total = total + c.getDenomination();
         }
         return total;

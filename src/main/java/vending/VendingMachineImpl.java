@@ -9,8 +9,8 @@ import java.util.List;
  */
 public class VendingMachineImpl implements VendingMachine {
 
-    private Inventory<Coin> cashInventory = new Inventory<Coin>();
-    private Inventory<Item> itemInventory = new Inventory<Item>();
+    private Inventory<Coin> cashInventory = new Inventory<>();
+    private Inventory<Item> itemInventory = new Inventory<>();
     private long totalSales;
     private Item currentItem;
     private long currentBalance;
@@ -148,6 +148,7 @@ public class VendingMachineImpl implements VendingMachine {
         totalSales = 0;
         currentItem = null;
         currentBalance = 0;
+        initialize();
     }
 
     public void printStats(){
